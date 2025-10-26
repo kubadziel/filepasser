@@ -1,0 +1,17 @@
+# Java / Maven
+target/
+*.log
+
+# IntelliJ / VSCode
+.idea/
+*.iml
+
+# Docker
+minio-data/
+postgres_data/
+
+# Environment / secrets
+.env
+
+#Other
+HELP.md
