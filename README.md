@@ -1,4 +1,4 @@
-# FilePasser Router
+# FilePasser
 
 **FilePasser** is a learning-oriented project designed to explore **microservice communication**, and **cloud integration** using modern technologies.
 
