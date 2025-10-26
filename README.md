@@ -48,13 +48,13 @@ This serves as the foundation for adding further messages processing and routing
 
 ## Local Development Setup
 
-### 1Prerequisites
+### Prerequisites
 - [Docker Desktop]
 - [Java 21]
 - [Maven 3.9+]
 - Git
 
-### 2️⃣ Start infrastructure and app
+### Start infrastructure and app
 Before running the app, create a `.env` file in your project root.  
 This file is **required** by both `docker-compose.yml` and `application.yml`.
 
