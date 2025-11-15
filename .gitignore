@@ -1,0 +1,169 @@
+############################################################
+# FILEPASSER ROOT GITIGNORE (MICROSERVICE READY)
+############################################################
+
+###############################
+# 1. Java / Maven / Spring Boot
+###############################
+target/
+**/target/
+*.jar
+*.war
+*.ear
+*.class
+
+# Maven Wrapper
+.mvn/
+!/.mvn/wrapper/maven-wrapper.jar
+
+# Maven local repo (if ever used inside repo — rare)
+.m2/
+
+###############################
+# 2. Node.js / React / Frontend
+###############################
+node_modules/
+**/node_modules/
+dist/
+build/
+*.tsbuildinfo
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+###############################
+# 3. IDEs and Editors
+###############################
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# VSCode
+.vscode/
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+###############################
+# 4. Operating System Files
+###############################
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+###############################
+# 5. Environment & Secrets
+###############################
+.env
+**/*.env
+.env.*
+credentials.json
+secrets/
+*.pem
+*.key
+*.crt
+*.cert
+
+###############################
+# 6. Docker / Containers
+###############################
+# Local volumes
+docker-data/
+**/docker-data/
+**/data/
+
+# Compose local overrides
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Ignore container build junk
+**/Dockerfile~
+**/dockerfile~
+.dockerignore~
+
+###############################
+# 7. Databases & Storage Volumes
+###############################
+# Postgres, MinIO, Redis, Kafka data
+router_pg_data/
+uploader_pg_data/
+router_pg-data/
+uploader_pg-data/
+postgres-data/
+**/postgres-data/
+pg-data/
+**/pg-data/
+postgres_data/
+**/postgres_data/
+pg_data/
+**/pg_data/
+
+minio-data/
+**/minio-data/
+**/.minio.sys/
+
+kafka_data/
+zookeeper_data/
+
+###############################
+# 8. Spring Boot Runtime Logs
+###############################
+logs/
+**/logs/
+*.log
+*.log.*
+
+###############################
+# 9. Compilation / Temp Files
+###############################
+tmp/
+temp/
+*.tmp
+*.cache
+.cache/
+**/.cache/
+
+###############################
+# 10. Test Output
+###############################
+test-output/
+**/test-output/
+bin/
+build/
+
+###############################
+# 11. Python (if scripts used later)
+###############################
+__pycache__/
+*.pyc
+*.pyo
+
+###############################
+# 12. Terraform / IaC (future cloud deployments)
+###############################
+*.tfstate
+*.tfstate.*
+.terraform/
+**/.terraform/
+terraform.tfvars
+terraform.tfvars.json
+crash.log
+override.tf
+override.tf.json
+
+###############################
+# 13. Misc / Future-Proofing
+###############################
+*._backup
+*.bak
+*.old
+*.orig
+
+############################################################
+# END OF FILEPASSER MONOREPO IGNORE FILE
+############################################################

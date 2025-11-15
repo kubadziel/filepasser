@@ -61,4 +61,4 @@ This file is **required** by both `docker-compose.yml` and `application.yml`.
 Then in the root directory (where `docker-compose.yml` is located) run:
 
 ```bash
-docker compose up --build
+make up
