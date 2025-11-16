@@ -1,19 +1,16 @@
-package router.service;
+package uploader.service;
 
-import io.minio.BucketExistsArgs;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
+import io.minio.*;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 
 @Service
+@RequiredArgsConstructor
 public class MinioService {
-
-    private final MinioClient minioClient;
 
     @Value("${filepasser.storage.bucket-name}")
     private String bucketName;
@@ -21,28 +18,36 @@ public class MinioService {
     @Value("${filepasser.storage.endpoint}")
     private String endpoint;
 
-    public MinioService(
-            @Value("${filepasser.storage.endpoint}") String endpoint,
-            @Value("${filepasser.storage.access-key}") String accessKey,
-            @Value("${filepasser.storage.secret-key}") String secretKey) {
+    @Value("${filepasser.storage.access-key}")
+    private String accessKey;
 
+    @Value("${filepasser.storage.secret-key}")
+    private String secretKey;
+
+    private MinioClient minioClient;
+
+    @PostConstruct
+    public void initClient() {
         this.minioClient = MinioClient.builder()
                 .endpoint(endpoint)
                 .credentials(accessKey, secretKey)
                 .build();
+
+        ensureBucket();
     }
 
-    @PostConstruct
-    public void ensureBucket() {
+    private void ensureBucket() {
         try {
-            boolean found = minioClient.bucketExists(
-                    BucketExistsArgs.builder().bucket(bucketName).build());
-            if (!found) {
+            boolean exists = minioClient.bucketExists(
+                    BucketExistsArgs.builder().bucket(bucketName).build()
+            );
+            if (!exists) {
                 minioClient.makeBucket(
-                        MakeBucketArgs.builder().bucket(bucketName).build());
+                        MakeBucketArgs.builder().bucket(bucketName).build()
+                );
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to initialize bucket: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to initialize MinIO bucket", e);
         }
     }
 
@@ -53,12 +58,11 @@ public class MinioService {
                             .bucket(bucketName)
                             .object(objectName)
                             .stream(stream, size, -1)
-                            .build());
-
-            return String.format("%s/%s/%s", endpoint, bucketName, objectName);
-
+                            .build()
+            );
+            return objectName; // you can prepend endpoint/bucket if you want full URL
         } catch (Exception e) {
-            throw new RuntimeException("File upload failed: " + e.getMessage(), e);
+            throw new RuntimeException("MinIO upload failed", e);
         }
     }
 }

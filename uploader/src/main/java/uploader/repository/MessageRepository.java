@@ -1,7 +1,7 @@
-package router.repository;
+package uploader.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import router.model.MessageEntity;
+import uploader.model.MessageEntity;
 
 import java.util.UUID;
 
