@@ -1,4 +1,4 @@
-package router.model;
+package shared.events;
 
 public enum MessageStatus {
     UPLOADED,

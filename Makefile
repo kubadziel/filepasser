@@ -1,8 +1,7 @@
 # =======================================================
-#  FILEPASSER MAKEFILE (Router + Uploader + Shared DB)
+#  FILEPASSER MAKEFILE (Router + Uploader + Frontend)
 # =======================================================
 
-# Variables
 DOCKER_COMPOSE = docker compose
 
 POSTGRES_CONTAINER = filepasser-postgres-1
@@ -12,40 +11,41 @@ KAFKA_CONTAINER = filepasser-kafka-1
 MINIO_ALIAS = local
 MINIO_BUCKET = router-inbound
 
-# Default target
 .DEFAULT_GOAL := help
 
-
 # --------------------------------------------
-# Help
+# HELP
 # --------------------------------------------
 help:
 	@echo ""
 	@echo " FilePasser - Developer Commands"
 	@echo "--------------------------------------------"
-	@echo " make up                 - Start all containers (build if needed)"
-	@echo " make down               - Stop all containers"
-	@echo " make rebuild            - Rebuild router + uploader and restart"
-	@echo " make logs               - Tail logs from all services"
+	@echo " make up                 - Start ALL services (backend + frontend + DB + Kafka)"
+	@echo " make down               - Stop all services"
+	@echo " make rebuild            - Rebuild router + uploader (Docker)"
+	@echo " make logs               - Tail all logs"
 	@echo " make clean              - Remove containers + volumes"
 	@echo ""
 	@echo " Backend:"
-	@echo " make router-build       - Build router Spring Boot JAR"
-	@echo " make uploader-build     - Build uploader Spring Boot JAR"
+	@echo " make router-build       - Build router backend"
+	@echo " make uploader-build     - Build uploader backend"
+	@echo ""
+	@echo " Frontend:"
+	@echo " make frontend-dev       - Start Vite dev server"
+	@echo " make frontend-build     - Build Vite frontend"
 	@echo ""
 	@echo " Database:"
-	@echo " make db-router-reset    - Reset Router database schema"
-	@echo " make db-uploader-reset  - Reset Uploader database schema"
+	@echo " make db-router-reset    - Reset Router DB"
+	@echo " make db-uploader-reset  - Reset Uploader DB"
 	@echo ""
 	@echo " MinIO:"
-	@echo " make minio-setup        - Configure MinIO client alias"
-	@echo " make minio-clean        - Remove all objects from bucket"
+	@echo " make minio-setup        - Configure mc alias"
+	@echo " make minio-clean        - Clear bucket"
 	@echo " make minio-reset        - Recreate bucket"
 	@echo ""
 
-
 # --------------------------------------------
-# Docker lifecycle
+# DOCKER LIFECYCLE
 # --------------------------------------------
 up:
 	$(DOCKER_COMPOSE) up --build -d
@@ -66,9 +66,8 @@ clean:
 	$(DOCKER_COMPOSE) down -v --remove-orphans
 	docker system prune -f
 
-
 # --------------------------------------------
-# Build
+# BACKEND BUILD
 # --------------------------------------------
 router-build:
 	mvn -f router/pom.xml clean package -DskipTests
@@ -76,37 +75,36 @@ router-build:
 uploader-build:
 	mvn -f uploader/pom.xml clean package -DskipTests
 
+# --------------------------------------------
+# FRONTEND (filepasser-frontend)
+# --------------------------------------------
+frontend-dev:
+	cd filepasser-frontend && npm install && npm run dev
+
+frontend-build:
+	cd filepasser-frontend && npm install && npm run build
 
 # --------------------------------------------
-# Database maintenance
+# DATABASE
 # --------------------------------------------
 db-router-reset:
-	@echo "Resetting routerdb schema..."
+	@echo "Resetting routerdb..."
 	$(DOCKER_COMPOSE) exec -T postgres psql -U postgres -d routerdb -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-	@echo "Router DB reset complete."
 
 db-uploader-reset:
-	@echo "Resetting uploaderdb schema..."
+	@echo "Resetting uploaderdb..."
 	$(DOCKER_COMPOSE) exec -T postgres psql -U postgres -d uploaderdb -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-	@echo "Uploader DB reset complete."
-
 
 # --------------------------------------------
-# MinIO maintenance (mc CLI required)
+# MINIO
 # --------------------------------------------
 minio-setup:
-	@echo "Configuring MinIO alias..."
 	$(DOCKER_COMPOSE) exec -T minio mc alias set $(MINIO_ALIAS) http://localhost:9000 minio minio123
-	@echo "MinIO alias configured."
 
 minio-clean:
-	@echo "Clearing bucket $(MINIO_BUCKET)..."
 	$(DOCKER_COMPOSE) exec -T minio mc rm --recursive --force $(MINIO_ALIAS)/$(MINIO_BUCKET) || true
-	@echo "Bucket cleaned."
 
 minio-reset:
-	@echo "Recreating bucket $(MINIO_BUCKET)..."
 	$(DOCKER_COMPOSE) exec -T minio mc rm --recursive --force $(MINIO_ALIAS)/$(MINIO_BUCKET) || true
 	$(DOCKER_COMPOSE) exec -T minio mc rb --force $(MINIO_ALIAS)/$(MINIO_BUCKET) || true
 	$(DOCKER_COMPOSE) exec -T minio mc mb $(MINIO_ALIAS)/$(MINIO_BUCKET)
-	@echo "Bucket recreated."

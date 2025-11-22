@@ -1,17 +1,17 @@
-package router.messaging.kafka;
+package uploader.messaging.kafka;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
-import shared.events.MessageReceivedAck;
+import shared.events.MessageUploadedEvent;
 
 @Component
 @RequiredArgsConstructor
-public class RouterAckProducer {
+public class MessageUploadedProducer {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public void sendAck(MessageReceivedAck ack) {
-        kafkaTemplate.send("message_received", ack.getMessageId().toString(), ack);
+    public void send(MessageUploadedEvent event) {
+        kafkaTemplate.send("message_uploaded", event.getId().toString(), event);
     }
 }

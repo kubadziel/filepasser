@@ -3,10 +3,10 @@ package router.messaging.kafka;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import router.messaging.events.MessageUploadedEvent;
-import router.messaging.events.MessageReceivedAck;
+import shared.events.MessageUploadedEvent;
+import shared.events.MessageReceivedAck;
+import shared.events.MessageStatus;
 import router.model.MessageEntity;
-import router.model.MessageStatus;
 import router.repository.MessageRepository;
 
 @Component
@@ -27,7 +27,7 @@ public class UploadedMessageListener {
         msg.setReceivedAt(event.getReceivedAt());
         msg.setStatus(MessageStatus.RECEIVED);
 
-        msg = repository.save(msg);
+        repository.save(msg);
 
         ackProducer.sendAck(new MessageReceivedAck(event.getId()));
     }

@@ -3,8 +3,8 @@ package uploader.messaging.kafka;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import uploader.messaging.events.MessageReceivedAck;
-import uploader.model.MessageStatus;
+import shared.events.MessageReceivedAck;
+import shared.events.MessageStatus;
 import uploader.repository.MessageRepository;
 
 @Component

@@ -1,8 +1,6 @@
-package router.messaging.events;
+package shared.events;
 
 import lombok.Data;
-import router.model.MessageStatus;
-
 import java.time.Instant;
 import java.util.UUID;
 

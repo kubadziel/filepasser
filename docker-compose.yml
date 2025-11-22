@@ -1,9 +1,6 @@
 version: "3.9"
 
 services:
-  # ================
-  # Single Postgres Server with two DBs
-  # ================
   postgres:
     image: postgres:16
     environment:
@@ -20,9 +17,6 @@ services:
       timeout: 3s
       retries: 5
 
-  # ================
-  # MinIO
-  # ================
   minio:
     image: minio/minio
     command: server /data --console-address ":9001"
@@ -40,9 +34,6 @@ services:
       timeout: 3s
       retries: 5
 
-  # ================
-  # Kafka / Redpanda
-  # ================
   kafka:
     image: redpandadata/redpanda:latest
     command:
@@ -59,11 +50,11 @@ services:
       timeout: 5s
       retries: 10
 
-  # ================
-  # Router microservice
-  # ================
   router:
-    build: ./router
+    build:
+      context: .
+      dockerfile: router/Dockerfile
+    container_name: filepasser-router
     depends_on:
       postgres:
         condition: service_healthy
@@ -72,29 +63,22 @@ services:
       kafka:
         condition: service_healthy
     environment:
-      # Database
-      ROUTER_DB_NAME: ${ROUTER_DB_NAME}
-      ROUTER_DB_USER: ${ROUTER_DB_USER}
-      ROUTER_DB_PASSWORD: ${ROUTER_DB_PASSWORD}
-
-      # MinIO
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${ROUTER_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${ROUTER_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${ROUTER_DB_PASSWORD}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       MINIO_BUCKET: ${MINIO_BUCKET}
-
-      # Kafka
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-
     ports:
       - "${ROUTER_PORT}:8080"
 
-
-  # ================
-  # Uploader microservice
-  # ================
   uploader:
-    build: ./uploader
+    build:
+      context: .
+      dockerfile: uploader/Dockerfile
+    container_name: filepasser-uploader
     depends_on:
       postgres:
         condition: service_healthy
@@ -103,22 +87,26 @@ services:
       kafka:
         condition: service_healthy
     environment:
-      # Database
-      UPLOADER_DB_NAME: ${UPLOADER_DB_NAME}
-      UPLOADER_DB_USER: ${UPLOADER_DB_USER}
-      UPLOADER_DB_PASSWORD: ${UPLOADER_DB_PASSWORD}
-
-      # MinIO
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${UPLOADER_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${UPLOADER_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${UPLOADER_DB_PASSWORD}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       MINIO_BUCKET: ${MINIO_BUCKET}
-
-      # Kafka
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-
     ports:
       - "${UPLOADER_PORT}:8080"
+
+  frontend:
+    build: ./filepasser-frontend
+    container_name: filepasser-frontend
+    depends_on:
+      - uploader
+    ports:
+      - "3000:3000"
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
 
 volumes:
   postgres_data:
