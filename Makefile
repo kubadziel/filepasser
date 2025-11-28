@@ -22,13 +22,16 @@ help:
 	@echo "--------------------------------------------"
 	@echo " make up                 - Start ALL services (backend + frontend + DB + Kafka)"
 	@echo " make down               - Stop all services"
-	@echo " make rebuild            - Rebuild router + uploader (Docker)"
+	@echo " make rebuild            - Rebuild shared events + router + uploader (Docker)"
 	@echo " make logs               - Tail all logs"
 	@echo " make clean              - Remove containers + volumes"
 	@echo ""
 	@echo " Backend:"
 	@echo " make router-build       - Build router backend"
 	@echo " make uploader-build     - Build uploader backend"
+	@echo " make shared-events-build- Build shared events jar"
+	@echo ""
+	@echo " (set RUN_TESTS=1 before any build target above to include tests)"
 	@echo ""
 	@echo " Frontend:"
 	@echo " make frontend-dev       - Start Vite dev server"
@@ -55,8 +58,24 @@ down:
 
 rebuild:
 	$(DOCKER_COMPOSE) down
-	mvn -f router/pom.xml clean install -DskipTests
-	mvn -f uploader/pom.xml clean install -DskipTests
+	@if [ "$${RUN_TESTS:-0}" = "1" ]; then \
+		echo "Running shared-kafka-events build with tests"; \
+		mvn -f common/shared-kafka-events/pom.xml clean install; \
+	else \
+		mvn -f common/shared-kafka-events/pom.xml clean install -DskipTests; \
+	fi
+	@if [ "$${RUN_TESTS:-0}" = "1" ]; then \
+		echo "Running router build with tests"; \
+		mvn -f router/pom.xml clean install; \
+	else \
+		mvn -f router/pom.xml clean install -DskipTests; \
+	fi
+	@if [ "$${RUN_TESTS:-0}" = "1" ]; then \
+		echo "Running uploader build with tests"; \
+		mvn -f uploader/pom.xml clean install; \
+	else \
+		mvn -f uploader/pom.xml clean install -DskipTests; \
+	fi
 	$(DOCKER_COMPOSE) up --build -d
 
 logs:
@@ -70,10 +89,28 @@ clean:
 # BACKEND BUILD
 # --------------------------------------------
 router-build:
-	mvn -f router/pom.xml clean package -DskipTests
+	@if [ "$${RUN_TESTS:-0}" = "1" ]; then \
+		echo "Running router build with tests"; \
+		mvn -f router/pom.xml clean package; \
+	else \
+		mvn -f router/pom.xml clean package -DskipTests; \
+	fi
 
 uploader-build:
-	mvn -f uploader/pom.xml clean package -DskipTests
+	@if [ "$${RUN_TESTS:-0}" = "1" ]; then \
+		echo "Running uploader build with tests"; \
+		mvn -f uploader/pom.xml clean package; \
+	else \
+		mvn -f uploader/pom.xml clean package -DskipTests; \
+	fi
+
+shared-events-build:
+	@if [ "$${RUN_TESTS:-0}" = "1" ]; then \
+		echo "Running shared-kafka-events build with tests"; \
+		mvn -f common/shared-kafka-events/pom.xml clean package; \
+	else \
+		mvn -f common/shared-kafka-events/pom.xml clean package -DskipTests; \
+	fi
 
 # --------------------------------------------
 # FRONTEND (filepasser-frontend)

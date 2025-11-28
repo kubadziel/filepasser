@@ -1,37 +1,47 @@
 package uploader.controller;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 import shared.events.MessageUploadedEvent;
 import uploader.model.MessageEntity;
 import uploader.repository.MessageRepository;
 import uploader.service.HashUtil;
 import uploader.service.MinioService;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@WebMvcTest(UploadController.class)
 class UploadControllerTest {
 
+    @Autowired MockMvc mvc;
+
+    @MockitoBean MinioService minioService;
+    @MockitoBean HashUtil hashUtil;
+    @MockitoBean MessageRepository messageRepository;
+    @MockitoBean KafkaTemplate<String, Object> kafkaTemplate;
+
     @Test
-    void testUploadSuccess() {
-
-        MinioService minio = mock(MinioService.class);
-        when(minio.upload(anyString(), any(), anyLong()))
-                .thenReturn("test-object.xml");
-
-        HashUtil hashUtil = new HashUtil();
-
-        MessageRepository repo = mock(MessageRepository.class);
-
-        when(repo.save(any())).thenAnswer(inv -> {
+    void upload_happy_path() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "a.xml",
+                MediaType.APPLICATION_XML_VALUE, "<xml/>".getBytes());
+        when(hashUtil.sha256(any())).thenReturn("hash");
+        when(minioService.upload(anyString(), any(), anyLong())).thenReturn("object.xml");
+        when(messageRepository.save(any(MessageEntity.class))).thenAnswer(inv -> {
             MessageEntity e = inv.getArgument(0);
             e.setUniqueId(UUID.randomUUID());
             e.setCreatedOn(Instant.now());
@@ -39,30 +49,21 @@ class UploadControllerTest {
             return e;
         });
 
-        @SuppressWarnings("unchecked")
-        KafkaTemplate<String, Object> kafka =
-                (KafkaTemplate<String, Object>) mock(KafkaTemplate.class);
+        mvc.perform(multipart("/api/upload").file(file).param("clientId", "client-1"))
+                .andExpect(status().isOk());
 
-        UploadController controller = new UploadController(
-                minio, hashUtil, repo, kafka
-        );
+        verify(kafkaTemplate).send(eq("message_uploaded"), any(MessageUploadedEvent.class));
+        verify(messageRepository, times(2)).save(any(MessageEntity.class));
+    }
 
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.xml",
-                MediaType.TEXT_XML_VALUE,
-                "<msg>Hello</msg>".getBytes(StandardCharsets.UTF_8)
-        );
+    @Test
+    void upload_minio_failure_returns_500() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "a.xml",
+                MediaType.APPLICATION_XML_VALUE, "<xml/>".getBytes());
+        when(hashUtil.sha256(any())).thenReturn("hash");
+        doThrow(new RuntimeException("boom")).when(minioService).upload(anyString(), any(), anyLong());
 
-        ResponseEntity<?> response =
-                controller.upload(file, "CLIENT1");
-
-        assertThat(response.getStatusCode().value())
-                .isEqualTo(200);
-
-        verify(kafka, times(1))
-                .send(eq("message_uploaded"), any(MessageUploadedEvent.class));
-
-        verify(repo, times(2)).save(any(MessageEntity.class));
+        mvc.perform(multipart("/api/upload").file(file).param("clientId", "client-1"))
+                .andExpect(status().is5xxServerError());
     }
 }

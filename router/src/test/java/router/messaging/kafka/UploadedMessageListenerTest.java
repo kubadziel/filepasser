@@ -10,8 +10,8 @@ import router.repository.MessageRepository;
 import java.time.Instant;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
-import static org.assertj.core.api.Assertions.*;
 
 class UploadedMessageListenerTest {
 
@@ -19,7 +19,6 @@ class UploadedMessageListenerTest {
     void testListenerStoresMessageAndSendsAck() {
         MessageRepository repo = mock(MessageRepository.class);
         RouterAckProducer producer = mock(RouterAckProducer.class);
-
         UploadedMessageListener listener = new UploadedMessageListener(repo, producer);
 
         MessageUploadedEvent event = new MessageUploadedEvent(
@@ -36,5 +35,6 @@ class UploadedMessageListenerTest {
 
         MessageEntity saved = entityCaptor.getValue();
         assertThat(saved.getClientId()).isEqualTo("CLIENT1");
+        assertThat(saved.getStatus()).isEqualTo(MessageStatus.RECEIVED);
     }
 }

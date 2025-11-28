@@ -1,15 +1,15 @@
 package uploader.service;
 
 import org.junit.jupiter.api.Test;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HashUtilTest {
 
     @Test
-    void testSha256() {
+    void sha256_matches_expected() {
         HashUtil util = new HashUtil();
-        String output = util.sha256("hello");
-        assertThat(output)
-                .isEqualTo("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
+        assertThat(util.sha256("abc"))
+                .isEqualTo("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
     }
 }

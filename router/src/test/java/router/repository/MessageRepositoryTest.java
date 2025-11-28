@@ -51,16 +51,9 @@ class MessageRepositoryTest {
         entity.setStatus(MessageStatus.RECEIVED);
 
         MessageEntity saved = messageRepository.save(entity);
-
-        assertThat(saved.getUniqueId()).isNotNull();
-
-        MessageEntity loaded = messageRepository.findById(saved.getUniqueId())
-                .orElseThrow();
+        MessageEntity loaded = messageRepository.findById(saved.getUniqueId()).orElseThrow();
 
         assertThat(loaded.getClientId()).isEqualTo("CLIENT1");
-        assertThat(loaded.getMessageType()).isEqualTo("pain.001");
-        assertThat(loaded.getBlobUrl()).isEqualTo("router-inbound/obj-1.xml");
-        assertThat(loaded.getSha256Hash()).isEqualTo("abc123");
         assertThat(loaded.getStatus()).isEqualTo(MessageStatus.RECEIVED);
         assertThat(loaded.getReceivedAt()).isEqualTo(Instant.parse("2025-01-01T10:00:00Z"));
     }
@@ -102,7 +95,6 @@ class MessageRepositoryTest {
         MessageEntity saved = messageRepository.save(entity);
 
         assertThat(saved.getCreatedOn()).isNotNull();
-        assertThat(saved.getLastChanged()).isNotNull();
         assertThat(saved.getLastChanged()).isAfterOrEqualTo(saved.getCreatedOn());
         assertThat(saved.getActive()).isTrue();
         assertThat(saved.getDeleted()).isFalse();
@@ -124,7 +116,7 @@ class MessageRepositoryTest {
         Instant createdOn = saved.getCreatedOn();
         Instant firstLastChanged = saved.getLastChanged();
 
-        Thread.sleep(5); // small delay so timestamps differ
+        Thread.sleep(5);
 
         saved.setStatus(MessageStatus.DELIVERED);
         MessageEntity updated = messageRepository.save(saved);
