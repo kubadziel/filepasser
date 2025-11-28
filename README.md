@@ -62,3 +62,22 @@ Then in the root directory (where `docker-compose.yml` is located) run:
 
 ```bash
 make up
+```
+
+## Testing
+
+### Backend
+- `RUN_TESTS=1 make shared-events-build`, `RUN_TESTS=1 make router-build`, `RUN_TESTS=1 make uploader-build` execute each module’s unit/integration suites.
+- `mvn -pl system-tests test` boots Postgres, Kafka, and MinIO via Testcontainers and validates the uploader → router → MinIO flow with real services.
+- `make e2e-full` ensures Docker is running, starts the Vite dev server, runs the Playwright happy-path test against the live stack, and tears everything down if it started it.
+
+### Frontend
+```bash
+cd filepasser-frontend
+npm install
+npx playwright install --with-deps   # first run only
+npm run dev                          # serves http://localhost:5173
+PLAYWRIGHT_BASE_URL=http://localhost:5173 npm run test:e2e
+```
+- Set `E2E_REAL_BACKEND=1` (and optionally `UPLOAD_ENDPOINT=...`) to run the happy-path Playwright spec against the live backend (requires the stack from `make up`).
+- Use `npm run test:e2e:ui` for Playwright’s interactive runner.

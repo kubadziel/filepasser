@@ -57,6 +57,7 @@ export default function FileDropZone() {
 
             {result && (
                 <Box
+                    data-testid="upload-result"
                     sx={{
                         mt: 3,
                         padding: 2,

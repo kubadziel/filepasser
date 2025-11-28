@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8081/api/upload";
+const API_URL = import.meta.env.VITE_UPLOAD_ENDPOINT ?? "http://localhost:8081/api/upload";
 
 export function uploadFile(file: File, clientId: string) {
     const formData = new FormData();

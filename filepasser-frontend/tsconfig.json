@@ -12,8 +12,9 @@
     "module": "ESNext",
     "moduleResolution": "Node",
     "isolatedModules": true,
+    "types": ["node"],
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src"]
+  "include": ["src", "*.e2e.spec.ts"]
 }

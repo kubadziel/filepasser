@@ -11,6 +11,10 @@ KAFKA_CONTAINER = filepasser-kafka-1
 MINIO_ALIAS = local
 MINIO_BUCKET = router-inbound
 
+FRONTEND_DIR = filepasser-frontend
+FRONTEND_E2E_PORT ?= 5173
+UPLOAD_ENDPOINT ?= http://localhost:8081/api/upload
+
 .DEFAULT_GOAL := help
 
 # --------------------------------------------
@@ -30,6 +34,7 @@ help:
 	@echo " make router-build       - Build router backend"
 	@echo " make uploader-build     - Build uploader backend"
 	@echo " make shared-events-build- Build shared events jar"
+	@echo " make e2e-full           - Run Playwright E2E test against live stack"
 	@echo ""
 	@echo " (set RUN_TESTS=1 before any build target above to include tests)"
 	@echo ""
@@ -120,6 +125,52 @@ frontend-dev:
 
 frontend-build:
 	cd filepasser-frontend && npm install && npm run build
+
+e2e-full:
+	@bash -c 'set -euo pipefail; \
+	STACK_STARTED=0; \
+	FRONTEND_PATH="$(CURDIR)/$(FRONTEND_DIR)"; \
+	if ! $(DOCKER_COMPOSE) ps --services --filter status=running | grep -q "^uploader$$"; then \
+		echo "Starting backend stack via docker compose..."; \
+		$(DOCKER_COMPOSE) up --build -d; \
+		STACK_STARTED=1; \
+	else \
+		echo "Backend stack already running, reusing existing containers."; \
+	fi; \
+	pushd "$$FRONTEND_PATH" >/dev/null; \
+	npm install >/dev/null; \
+	npx playwright install --with-deps >/dev/null; \
+	LOG_FILE=$$(mktemp); \
+	echo "Starting Vite dev server on port $(FRONTEND_E2E_PORT)..."; \
+	VITE_PORT=$(FRONTEND_E2E_PORT) VITE_UPLOAD_ENDPOINT=$(UPLOAD_ENDPOINT) npm run dev -- --host 0.0.0.0 >$$LOG_FILE 2>&1 & \
+	DEV_PID=$$!; \
+	popd >/dev/null; \
+	READY=0; \
+	for i in $$(seq 1 30); do \
+		if curl -fsS "http://localhost:$(FRONTEND_E2E_PORT)" >/dev/null 2>&1; then READY=1; break; fi; \
+		sleep 1; \
+	done; \
+	if [ $$READY -ne 1 ]; then \
+		echo "Vite dev server failed to start; check $$LOG_FILE"; \
+		kill $$DEV_PID 2>/dev/null || true; wait $$DEV_PID 2>/dev/null || true; \
+		if [ $$STACK_STARTED -eq 1 ]; then $(DOCKER_COMPOSE) down; fi; \
+		exit 1; \
+	fi; \
+	echo "Running Playwright against real backend..."; \
+	STATUS=0; \
+	pushd "$$FRONTEND_PATH" >/dev/null; \
+	PLAYWRIGHT_BASE_URL=http://localhost:$(FRONTEND_E2E_PORT) \
+	E2E_REAL_BACKEND=1 \
+	UPLOAD_ENDPOINT=$(UPLOAD_ENDPOINT) \
+	npm run test:e2e || STATUS=$$?; \
+	popd >/dev/null; \
+	kill $$DEV_PID 2>/dev/null || true; wait $$DEV_PID 2>/dev/null || true; \
+	rm -f $$LOG_FILE; \
+	if [ $$STACK_STARTED -eq 1 ]; then \
+		echo "Stopping docker compose stack..."; \
+		$(DOCKER_COMPOSE) down; \
+	fi; \
+	exit $$STATUS'
 
 # --------------------------------------------
 # DATABASE
