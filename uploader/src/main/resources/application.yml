@@ -21,9 +21,18 @@ spring:
       properties:
         spring.json.trusted.packages: "shared.events"
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak:8080/realms/filepasser}
+
 filepasser:
   storage:
     endpoint: ${MINIO_ENDPOINT}
     access-key: ${MINIO_ACCESS_KEY}
     secret-key: ${MINIO_SECRET_KEY}
     bucket-name: ${MINIO_BUCKET}
+
+security:
+  enabled: true

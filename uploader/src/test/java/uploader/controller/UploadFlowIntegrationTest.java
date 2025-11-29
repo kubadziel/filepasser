@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @EmbeddedKafka(partitions = 1, topics = "message_uploaded")
 @TestPropertySource(properties = {
         "spring.datasource.url=jdbc:h2:mem:uploader-int;DB_CLOSE_DELAY=-1",
