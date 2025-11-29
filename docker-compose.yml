@@ -1,0 +1,112 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_SUPERUSER}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERPASS}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_SUPERUSER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "${MINIO_API_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
+    volumes:
+      - ./minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${MINIO_API_PORT}/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  kafka:
+    image: redpandadata/redpanda:latest
+    command:
+      - redpanda
+      - start
+      - --mode=dev-container
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://kafka:9092
+    ports:
+      - "${KAFKA_PORT}:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'healthy'"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  router:
+    build:
+      context: .
+      dockerfile: router/Dockerfile
+    container_name: filepasser-router
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${ROUTER_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${ROUTER_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${ROUTER_DB_PASSWORD}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "${ROUTER_PORT}:8080"
+
+  uploader:
+    build:
+      context: .
+      dockerfile: uploader/Dockerfile
+    container_name: filepasser-uploader
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${UPLOADER_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${UPLOADER_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${UPLOADER_DB_PASSWORD}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "${UPLOADER_PORT}:8080"
+
+  frontend:
+    build: ./filepasser-frontend
+    container_name: filepasser-frontend
+    depends_on:
+      - uploader
+    ports:
+      - "3000:3000"
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+volumes:
+  postgres_data:
