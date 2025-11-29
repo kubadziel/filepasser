@@ -46,6 +46,16 @@ This serves as the foundation for adding further messages processing and routing
 
 ---
 
+## Modules
+
+- `common/shared-kafka-events` &mdash; shared DTOs and enums exchanged between services.
+- `uploader` &mdash; REST API that accepts uploads, stores files in MinIO, writes uploader DB entries, and emits Kafka events.
+- `router` &mdash; consumes upload events, persists router DB records, and produces acknowledgements.
+- `system-tests` &mdash; boots the real uploader + router apps with Postgres/Kafka/MinIO via Testcontainers to verify the full backend flow.
+- `filepasser-frontend` &mdash; React + Playwright UI that lets users submit files and inspect the JSON response.
+
+---
+
 ## Local Development Setup
 
 ### Prerequisites
@@ -64,6 +74,8 @@ Then in the root directory (where `docker-compose.yml` is located) run:
 make up
 ```
 
+> **Note:** The uploader service exposes `/api/**` with CORS enabled for `http://localhost:5173` by default (see `uploader/src/main/java/uploader/config/WebConfig.java`). Adjust the allowed origins before deploying to non-dev environments.
+
 ## Testing
 
 ### Backend
@@ -81,3 +93,4 @@ PLAYWRIGHT_BASE_URL=http://localhost:5173 npm run test:e2e
 ```
 - Set `E2E_REAL_BACKEND=1` (and optionally `UPLOAD_ENDPOINT=...`) to run the happy-path Playwright spec against the live backend (requires the stack from `make up`).
 - Use `npm run test:e2e:ui` for Playwright’s interactive runner.
+- `make e2e-full` is a convenience wrapper that ensures Docker is running, launches the Vite dev server on the requested port, runs the Playwright happy-path test in real-backend mode, and tears everything down again if it started the stack.
