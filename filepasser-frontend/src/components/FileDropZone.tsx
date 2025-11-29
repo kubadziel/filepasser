@@ -3,6 +3,8 @@ import { useDropzone } from "react-dropzone";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { uploadFile } from "../api/api";
 
+const CONTRACT_ID_REGEX = /^(\d{7})/;
+
 export default function FileDropZone() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<string | null>(null);
@@ -11,11 +13,17 @@ export default function FileDropZone() {
         const file = files[0];
         if (!file) return;
 
+        const match = CONTRACT_ID_REGEX.exec(file.name);
+        if (!match) {
+            setResult("Upload failed: filename must start with a 7-digit contract ID.");
+            return;
+        }
+
         setLoading(true);
         setResult(null);
 
         try {
-            const response = await uploadFile(file, "UI_CLIENT");
+            const response = await uploadFile(file);
             setResult(JSON.stringify(response.data, null, 2));
         } catch (err: any) {
             setResult("Upload failed: " + err.message);

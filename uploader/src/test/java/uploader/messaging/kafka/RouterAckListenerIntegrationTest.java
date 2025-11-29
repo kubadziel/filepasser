@@ -53,7 +53,7 @@ class RouterAckListenerIntegrationTest {
     @Test
     void ackEventUpdatesMessageStatus() {
         MessageEntity entity = new MessageEntity();
-        entity.setClientId("CLIENT-ACK");
+        entity.setContractId("1234567");
         entity.setMessageType("pain.001");
         entity.setBlobUrl("blob");
         entity.setSha256Hash("hash");

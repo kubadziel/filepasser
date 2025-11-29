@@ -1,5 +1,6 @@
 package uploader.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -16,7 +17,8 @@ import java.time.Instant;
 @NoArgsConstructor
 public class MessageEntity extends BaseEntity {
 
-    private String clientId;
+    @Column(nullable = false, length = 7)
+    private String contractId;
     private String messageType;
     private String blobUrl;
     private String sha256Hash;

@@ -8,7 +8,7 @@ public class MessageEventMapper {
     public static MessageUploadedEvent toEvent(MessageEntity e) {
         MessageUploadedEvent evt = new MessageUploadedEvent();
         evt.setId(e.getUniqueId());
-        evt.setClientId(e.getClientId());
+        evt.setContractId(e.getContractId());
         evt.setMessageType(e.getMessageType());
         evt.setBlobUrl(e.getBlobUrl());
         evt.setSha256Hash(e.getSha256Hash());

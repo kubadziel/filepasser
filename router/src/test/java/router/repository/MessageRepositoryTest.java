@@ -43,7 +43,7 @@ class MessageRepositoryTest {
     @DisplayName("save() should persist and findById() should load the same entity")
     void saveAndLoadMessage() {
         MessageEntity entity = new MessageEntity();
-        entity.setClientId("CLIENT1");
+        entity.setContractId("1234567");
         entity.setMessageType("pain.001");
         entity.setBlobUrl("router-inbound/obj-1.xml");
         entity.setSha256Hash("abc123");
@@ -53,7 +53,7 @@ class MessageRepositoryTest {
         MessageEntity saved = messageRepository.save(entity);
         MessageEntity loaded = messageRepository.findById(saved.getUniqueId()).orElseThrow();
 
-        assertThat(loaded.getClientId()).isEqualTo("CLIENT1");
+        assertThat(loaded.getContractId()).isEqualTo("1234567");
         assertThat(loaded.getStatus()).isEqualTo(MessageStatus.RECEIVED);
         assertThat(loaded.getReceivedAt()).isEqualTo(Instant.parse("2025-01-01T10:00:00Z"));
     }
@@ -62,7 +62,7 @@ class MessageRepositoryTest {
     @DisplayName("MessageStatus enum should be correctly persisted and read back")
     void statusEnumIsPersisted() {
         MessageEntity entity = new MessageEntity();
-        entity.setClientId("CLIENT2");
+        entity.setContractId("2345678");
         entity.setMessageType("pain.001");
         entity.setBlobUrl("router-inbound/obj-2.xml");
         entity.setSha256Hash("xyz789");
@@ -85,7 +85,7 @@ class MessageRepositoryTest {
     @DisplayName("Audit fields (createdOn, lastChanged, active, deleted) should be initialized")
     void auditFieldsInitializedOnPersist() {
         MessageEntity entity = new MessageEntity();
-        entity.setClientId("CLIENT3");
+        entity.setContractId("3456789");
         entity.setMessageType("pain.001");
         entity.setBlobUrl("router-inbound/obj-3.xml");
         entity.setSha256Hash("hash-123");
@@ -104,7 +104,7 @@ class MessageRepositoryTest {
     @DisplayName("lastChanged should update when entity is modified and saved again")
     void lastChangedUpdatesOnUpdate() throws InterruptedException {
         MessageEntity entity = new MessageEntity();
-        entity.setClientId("CLIENT4");
+        entity.setContractId("4567890");
         entity.setMessageType("pain.001");
         entity.setBlobUrl("router-inbound/obj-4.xml");
         entity.setSha256Hash("hash-456");

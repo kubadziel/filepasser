@@ -25,7 +25,7 @@ class MessageUploadedEventContractTest {
     void serializes_expected_shape() throws Exception {
         MessageUploadedEvent event = new MessageUploadedEvent();
         event.setId(UUID.fromString("00000000-0000-0000-0000-000000000123"));
-        event.setClientId("client");
+        event.setContractId("1234567");
         event.setMessageType("pain.001");
         event.setBlobUrl("obj");
         event.setSha256Hash("hash");
@@ -34,7 +34,7 @@ class MessageUploadedEventContractTest {
 
         String json = mapper.writeValueAsString(event);
 
-        assertThat(json).contains("\"clientId\":\"client\"");
+        assertThat(json).contains("\"contractId\":\"1234567\"");
         assertThat(json).contains("\"status\":\"UPLOADED\"");
         assertThat(json).contains("2024-01-01T00:00:00Z");
     }

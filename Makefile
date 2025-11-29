@@ -34,6 +34,7 @@ help:
 	@echo " make router-build       - Build router backend"
 	@echo " make uploader-build     - Build uploader backend"
 	@echo " make shared-events-build- Build shared events jar"
+	@echo " make shared-security-build- Build shared security jar"
 	@echo " make e2e-full           - Run Playwright E2E test against live stack"
 	@echo ""
 	@echo " (set RUN_TESTS=1 before any build target above to include tests)"
@@ -68,6 +69,12 @@ rebuild:
 		mvn -f common/shared-kafka-events/pom.xml clean install; \
 	else \
 		mvn -f common/shared-kafka-events/pom.xml clean install -DskipTests; \
+	fi
+	@if [ "$${RUN_TESTS:-0}" = "1" ]; then \
+		echo "Running shared-security build with tests"; \
+		mvn -f common/shared-security/pom.xml clean install; \
+	else \
+		mvn -f common/shared-security/pom.xml clean install -DskipTests; \
 	fi
 	@if [ "$${RUN_TESTS:-0}" = "1" ]; then \
 		echo "Running router build with tests"; \
@@ -115,6 +122,14 @@ shared-events-build:
 		mvn -f common/shared-kafka-events/pom.xml clean package; \
 	else \
 		mvn -f common/shared-kafka-events/pom.xml clean package -DskipTests; \
+	fi
+
+shared-security-build:
+	@if [ "$${RUN_TESTS:-0}" = "1" ]; then \
+		echo "Running shared-security build with tests"; \
+		mvn -f common/shared-security/pom.xml clean package; \
+	else \
+		mvn -f common/shared-security/pom.xml clean package -DskipTests; \
 	fi
 
 # --------------------------------------------

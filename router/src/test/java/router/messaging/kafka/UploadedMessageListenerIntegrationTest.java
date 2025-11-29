@@ -86,7 +86,7 @@ class UploadedMessageListenerIntegrationTest {
     void listenerPersistsMessageAndEmitsAck() {
         MessageUploadedEvent event = new MessageUploadedEvent(
                 UUID.randomUUID(),
-                "CLIENT-INT",
+                "1234567",
                 "pain.001",
                 "router/blob.xml",
                 "hash123",
@@ -101,7 +101,7 @@ class UploadedMessageListenerIntegrationTest {
                 .untilAsserted(() -> {
                     assertThat(messageRepository.count()).isEqualTo(1);
                     MessageEntity stored = messageRepository.findAll().get(0);
-                    assertThat(stored.getClientId()).isEqualTo("CLIENT-INT");
+                    assertThat(stored.getContractId()).isEqualTo("1234567");
                     assertThat(stored.getStatus()).isEqualTo(MessageStatus.RECEIVED);
                     assertThat(stored.getSha256Hash()).isEqualTo("hash123");
                 });

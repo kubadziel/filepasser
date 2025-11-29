@@ -13,7 +13,7 @@ import java.util.UUID;
 public class MessageUploadedEvent {
 
     private UUID id;
-    private String clientId;
+    private String contractId;
     private String messageType;
     private String blobUrl;
     private String sha256Hash;

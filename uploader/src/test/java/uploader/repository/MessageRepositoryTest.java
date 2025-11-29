@@ -18,7 +18,7 @@ class MessageRepositoryTest {
     @Test
     void save_and_find() {
         MessageEntity entity = new MessageEntity();
-        entity.setClientId("c1");
+        entity.setContractId("1234567");
         entity.setMessageType("pain.001");
         entity.setBlobUrl("obj");
         entity.setSha256Hash("hash");
@@ -28,7 +28,7 @@ class MessageRepositoryTest {
         MessageEntity saved = repo.save(entity);
         MessageEntity found = repo.findById(saved.getUniqueId()).orElseThrow();
 
-        assertThat(found.getClientId()).isEqualTo("c1");
+        assertThat(found.getContractId()).isEqualTo("1234567");
         assertThat(found.getStatus()).isEqualTo(MessageStatus.UPLOADED);
     }
 }

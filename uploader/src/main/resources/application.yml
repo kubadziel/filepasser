@@ -36,3 +36,12 @@ filepasser:
 
 security:
   enabled: true
+
+keycloak:
+  validation:
+    enabled: ${KEYCLOAK_VALIDATION_ENABLED:true}
+    token-url: ${KEYCLOAK_TOKEN_URL:http://keycloak:8080/realms/filepasser/protocol/openid-connect/token}
+    users-url: ${KEYCLOAK_USERS_URL:http://keycloak:8080/admin/realms/filepasser/users}
+    client-id: ${KEYCLOAK_CLIENT_ID:admin-cli}
+    username: ${KEYCLOAK_ADMIN:admin}
+    password: ${KEYCLOAK_ADMIN_PASSWORD:admin}

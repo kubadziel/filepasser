@@ -17,6 +17,7 @@ import shared.events.MessageStatus;
 import shared.events.MessageUploadedEvent;
 import uploader.model.MessageEntity;
 import uploader.repository.MessageRepository;
+import uploader.service.KeycloakUserService;
 import uploader.service.MinioService;
 
 import java.time.Instant;
@@ -57,11 +58,18 @@ class UploadFlowIntegrationTest {
     private MinioService minioService;
 
     @MockBean
+    private KeycloakUserService keycloakUserService;
+
+    @MockBean
     private KafkaTemplate<String, Object> kafkaTemplate;
+
+    private String contractId;
 
     @BeforeEach
     void cleanRepository() {
         messageRepository.deleteAll();
+        contractId = "1234567";
+        when(keycloakUserService.contractExists(contractId)).thenReturn(true);
     }
 
     @Test
@@ -70,7 +78,7 @@ class UploadFlowIntegrationTest {
 
         MockMultipartFile file = new MockMultipartFile(
                 "file",
-                "pain001.xml",
+                contractId + "_pain001.xml",
                 MediaType.APPLICATION_XML_VALUE,
                 "<pain></pain>".getBytes()
         );
@@ -78,11 +86,10 @@ class UploadFlowIntegrationTest {
         mockMvc.perform(
                         multipart("/api/upload")
                                 .file(file)
-                                .param("clientId", "CLIENT-GUI")
                                 .characterEncoding("UTF-8")
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.clientId").value("CLIENT-GUI"))
+                .andExpect(jsonPath("$.contractId").value(contractId))
                 .andExpect(jsonPath("$.status").value("SENT_TO_ROUTER"));
 
         List<MessageEntity> stored = messageRepository.findAll();
@@ -90,6 +97,7 @@ class UploadFlowIntegrationTest {
 
         MessageEntity entity = stored.get(0);
         assertThat(entity.getStatus()).isEqualTo(MessageStatus.SENT_TO_ROUTER);
+        assertThat(entity.getContractId()).isEqualTo(contractId);
         assertThat(entity.getBlobUrl()).isEqualTo("object.xml");
         assertThat(entity.getSha256Hash()).isNotBlank();
         assertThat(entity.getCreatedOn()).isNotNull();
@@ -100,7 +108,7 @@ class UploadFlowIntegrationTest {
         verify(kafkaTemplate, times(1)).send(eq("message_uploaded"), eventCaptor.capture());
 
         MessageUploadedEvent published = eventCaptor.getValue();
-        assertThat(published.getClientId()).isEqualTo("CLIENT-GUI");
+        assertThat(published.getContractId()).isEqualTo(contractId);
         assertThat(published.getStatus()).isEqualTo(MessageStatus.UPLOADED);
         assertThat(published.getBlobUrl()).isEqualTo("object.xml");
     }

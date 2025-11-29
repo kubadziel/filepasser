@@ -23,7 +23,7 @@ class EventSerializationTest {
     void messageUploaded_roundTrip() throws Exception {
         MessageUploadedEvent event = new MessageUploadedEvent();
         event.setId(UUID.fromString("00000000-0000-0000-0000-000000000123"));
-        event.setClientId("c1");
+        event.setContractId("1234567");
         event.setMessageType("pain.001");
         event.setBlobUrl("obj");
         event.setSha256Hash("hash");
@@ -33,7 +33,7 @@ class EventSerializationTest {
         String json = mapper.writeValueAsString(event);
         MessageUploadedEvent back = mapper.readValue(json, MessageUploadedEvent.class);
 
-        assertThat(back.getClientId()).isEqualTo("c1");
+        assertThat(back.getContractId()).isEqualTo("1234567");
         assertThat(back.getStatus()).isEqualTo(MessageStatus.UPLOADED);
     }
 
