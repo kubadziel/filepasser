@@ -24,7 +24,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${KEYCLOAK_INTERNAL_ISSUER_URI}
+          issuer-uri: ${KEYCLOAK_INTERNAL_ISSUER_URI:http://localhost:9999/realms/dev}
 
 security:
   enabled: true

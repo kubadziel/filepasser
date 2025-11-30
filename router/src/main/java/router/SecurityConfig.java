@@ -8,11 +8,12 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import shared.security.BaseSecurityConfig;
+import shared.security.CorsConfig;
 import shared.security.DisabledSecurityConfig;
 
 @Configuration
 @EnableMethodSecurity
-@Import(DisabledSecurityConfig.class)
+@Import({DisabledSecurityConfig.class, CorsConfig.class})
 @ConditionalOnProperty(value = "security.enabled", matchIfMissing = true)
 public class SecurityConfig extends BaseSecurityConfig {
 

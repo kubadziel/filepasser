@@ -1,25 +1,15 @@
 package uploader.config;
 
-import org.springframework.context.annotation.Bean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
+/**
+ * Deprecated: CORS is now configured via shared.security.CorsConfig using properties.
+ * This class is kept only to avoid bean-loading errors in existing contexts and
+ * is disabled unless explicitly re-enabled.
+ */
 @Configuration
+@ConditionalOnProperty(value = "security.cors.legacy-enabled", havingValue = "true")
+@Deprecated
 public class CorsGlobalConfig {
-
-    @Bean
-    public CorsFilter corsFilter() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("http://localhost:3000");
-        config.addAllowedMethod("*");
-        config.addAllowedHeader("*");
-        config.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
-        return new CorsFilter(source);
-    }
 }

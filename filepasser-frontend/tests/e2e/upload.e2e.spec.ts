@@ -3,8 +3,6 @@ import { test, expect } from "@playwright/test";
 const uploadEndpoint =
   process.env.UPLOAD_ENDPOINT ?? "http://localhost:8081/api/upload";
 const USE_REAL_BACKEND = process.env.E2E_REAL_BACKEND === "1";
-const TEST_EMAIL = process.env.E2E_USER_EMAIL ?? "test@filepasser.local";
-const TEST_PASSWORD = process.env.E2E_USER_PASSWORD ?? "Password123!";
 
 const testFilename = "1234567_sample.xml";
 
@@ -23,12 +21,8 @@ test.describe("Upload flow", () => {
       });
     }
 
-    await page.goto("/upload");
-    await page.waitForURL("**/realms/**/protocol/openid-connect/auth*", { waitUntil: "domcontentloaded" });
-    await page.fill("input#username", TEST_EMAIL);
-    await page.fill("input#password", TEST_PASSWORD);
-    await page.click("input#kc-login");
-    await page.waitForURL("**/upload");
+    await page.goto("/dashboard");
+    await page.getByText("Upload XML Message").click();
     await expect(page.getByText("Upload XML File")).toBeVisible();
 
     await page.setInputFiles('input[type="file"]', {
@@ -69,12 +63,8 @@ test.describe("Upload flow", () => {
       });
     });
 
-    await page.goto("/upload");
-    await page.waitForURL("**/realms/**/protocol/openid-connect/auth*", { waitUntil: "domcontentloaded" });
-    await page.fill("input#username", TEST_EMAIL);
-    await page.fill("input#password", TEST_PASSWORD);
-    await page.click("input#kc-login");
-    await page.waitForURL("**/upload");
+    await page.goto("/dashboard");
+    await page.getByText("Upload XML Message").click();
 
     await page.setInputFiles('input[type="file"]', {
       name: testFilename,
