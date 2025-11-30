@@ -6,10 +6,12 @@ type KeycloakConfig = {
   clientId: string;
 };
 
+const env = import.meta.env;
+
 const config: KeycloakConfig = {
-  url: import.meta.env.VITE_KEYCLOAK_URL ?? "http://localhost:8085",
-  realm: import.meta.env.VITE_KEYCLOAK_REALM ?? "filepasser",
-  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "filepasser-frontend",
+  url: env.VITE_KEYCLOAK_URL ?? "http://keycloak:8085",
+  realm: env.VITE_KEYCLOAK_REALM ?? "filepasser",
+  clientId: env.VITE_KEYCLOAK_CLIENT_ID ?? "filepasser-frontend",
 };
 
 const keycloak = new Keycloak(config);

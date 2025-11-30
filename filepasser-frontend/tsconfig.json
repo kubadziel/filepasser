@@ -10,9 +10,9 @@
     "strict": false,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "isolatedModules": true,
-    "types": ["node"],
+    "types": ["node", "vite/client", "./src/types/keycloak-js"],
     "noEmit": true,
     "jsx": "react-jsx"
   },

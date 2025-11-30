@@ -1,5 +1,6 @@
 package shared.security;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
@@ -10,6 +11,7 @@ public abstract class BaseSecurityConfig {
 
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
                     if (permitAllPatterns != null) {
                         for (String pattern : permitAllPatterns) {
                             auth.requestMatchers(pattern).permitAll();

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ReactKeycloakProvider, useKeycloak } from "@react-keycloak/web";
 import keycloak from "../keycloak";
 import { setAuthToken } from "../api/http";
@@ -15,6 +15,44 @@ const onTokens = (tokens: { token?: string } | undefined) => {
   }
 };
 
+const TokenSynchronizer = ({ children }: { children: React.ReactNode }) => {
+  const { keycloak, initialized } = useKeycloak();
+
+  useEffect(() => {
+    if (!initialized) {
+      return;
+    }
+
+    const applyToken = () => setAuthToken(keycloak.token ?? undefined);
+
+    applyToken();
+
+    keycloak.onTokenExpired = () =>
+      keycloak
+        .updateToken(5)
+        .then(applyToken)
+        .catch(() => keycloak.logout());
+
+    const intervalId = window.setInterval(() => {
+      keycloak
+        .updateToken(60)
+        .then(refreshed => {
+          if (refreshed) {
+            applyToken();
+          }
+        })
+        .catch(() => keycloak.logout());
+    }, 30000);
+
+    return () => {
+      window.clearInterval(intervalId);
+      keycloak.onTokenExpired = undefined;
+    };
+  }, [initialized, keycloak]);
+
+  return <>{children}</>;
+};
+
 export const AuthProvider = ({ children }: AuthProviderProps) => (
   <ReactKeycloakProvider
     authClient={keycloak}
@@ -22,7 +60,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => (
     onTokens={onTokens}
     LoadingComponent={null}
   >
-    {children}
+    <TokenSynchronizer>{children}</TokenSynchronizer>
   </ReactKeycloakProvider>
 );
 
