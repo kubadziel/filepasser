@@ -21,9 +21,31 @@ spring:
       properties:
         spring.json.trusted.packages: "shared.events"
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_INTERNAL_ISSUER_URI:http://localhost:9999/realms/dev}
+
 filepasser:
   storage:
     endpoint: ${MINIO_ENDPOINT}
     access-key: ${MINIO_ACCESS_KEY}
     secret-key: ${MINIO_SECRET_KEY}
     bucket-name: ${MINIO_BUCKET}
+
+security:
+  enabled: true
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+    allow-credentials: true
+
+keycloak:
+  validation:
+    enabled: ${KEYCLOAK_VALIDATION_ENABLED:true}
+    token-url: ${KEYCLOAK_INTERNAL_TOKEN_URL:}
+    users-url: ${KEYCLOAK_INTERNAL_USERS_URL:}
+    client-id: ${KEYCLOAK_CLIENT_ID:}
+    username: ${KEYCLOAK_ADMIN:}
+    password: ${KEYCLOAK_ADMIN_PASSWORD:}

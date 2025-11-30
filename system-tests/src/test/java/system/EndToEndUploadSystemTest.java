@@ -101,9 +101,10 @@ class EndToEndUploadSystemTest {
         String uploaderBaseUrl = "http://localhost:" + UPLOADER_PORT + "/api/upload";
         byte[] payload = Files.readAllBytes(Path.of("src/test/resources/test-files/sample_pain001.xml"));
 
+        String contractId = "7654321";
+
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("clientId", "SYSTEM-CLIENT");
-        body.add("file", new NamedByteArrayResource(payload, "sample_pain001.xml"));
+        body.add("file", new NamedByteArrayResource(payload, contractId + "_sample_pain001.xml"));
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -115,7 +116,6 @@ class EndToEndUploadSystemTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("status")).isEqualTo("SENT_TO_ROUTER");
 
-        JdbcTemplate uploaderJdbc = new JdbcTemplate(dataSourceFor(uploaderDb));
         JdbcTemplate routerJdbc = new JdbcTemplate(dataSourceFor(routerDb));
 
         Awaitility.await()
@@ -125,8 +125,8 @@ class EndToEndUploadSystemTest {
                     assertThat(count).isEqualTo(1);
                 });
 
-        Map<String, Object> routerRow = routerJdbc.queryForMap("select client_id, status, blob_url from message_entity");
-        assertThat(routerRow.get("client_id")).isEqualTo("SYSTEM-CLIENT");
+        Map<String, Object> routerRow = routerJdbc.queryForMap("select contract_id, status, blob_url from message_entity");
+        assertThat(routerRow.get("contract_id")).isEqualTo(contractId);
         assertThat(routerRow.get("status")).isEqualTo("RECEIVED");
 
         Awaitility.await()
@@ -161,6 +161,7 @@ class EndToEndUploadSystemTest {
         props.put("spring.kafka.bootstrap-servers", kafka.getBootstrapServers());
         props.put("spring.kafka.consumer.auto-offset-reset", "earliest");
         props.put("spring.kafka.consumer.properties.spring.json.trusted.packages", "shared.events");
+        props.put("security.enabled", "false");
 
         return new SpringApplicationBuilder(FilepasserRouterApplication.class)
                 .properties(props)
@@ -182,6 +183,8 @@ class EndToEndUploadSystemTest {
         props.put("filepasser.storage.access-key", minio.getUserName());
         props.put("filepasser.storage.secret-key", minio.getPassword());
         props.put("filepasser.storage.bucket-name", TEST_BUCKET);
+        props.put("security.enabled", "false");
+        props.put("keycloak.validation.enabled", "false");
 
         return new SpringApplicationBuilder(UploaderApplication.class)
                 .properties(props)

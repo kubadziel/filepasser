@@ -62,6 +62,9 @@ Thumbs.db
 .env
 **/*.env
 .env.*
+.env.test
+filepasser-frontend/.env.test
+filepasser-frontend/.auth/
 credentials.json
 secrets/
 *.pem
@@ -135,6 +138,8 @@ test-output/
 **/test-output/
 bin/
 build/
+filepasser-frontend/test-results/
+filepasser-frontend/playwright-report/
 
 ###############################
 # 11. Python (if scripts used later)

@@ -19,3 +19,12 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "shared.events"
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_INTERNAL_ISSUER_URI:http://localhost:9999/realms/dev}
+
+security:
+  enabled: true

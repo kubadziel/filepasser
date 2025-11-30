@@ -22,7 +22,7 @@ class UploadedMessageListenerTest {
         UploadedMessageListener listener = new UploadedMessageListener(repo, producer);
 
         MessageUploadedEvent event = new MessageUploadedEvent(
-                UUID.randomUUID(), "CLIENT1", "pain.001",
+                UUID.randomUUID(), "1234567", "pain.001",
                 "blob.xml", "ABC", Instant.now(), MessageStatus.UPLOADED
         );
 
@@ -34,7 +34,7 @@ class UploadedMessageListenerTest {
         verify(producer).sendAck(any());
 
         MessageEntity saved = entityCaptor.getValue();
-        assertThat(saved.getClientId()).isEqualTo("CLIENT1");
+        assertThat(saved.getContractId()).isEqualTo("1234567");
         assertThat(saved.getStatus()).isEqualTo(MessageStatus.RECEIVED);
     }
 }

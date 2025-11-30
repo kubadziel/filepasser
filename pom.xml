@@ -17,6 +17,7 @@
 
     <modules>
         <module>common/shared-kafka-events</module>
+        <module>common/shared-security</module>
         <module>uploader</module>
         <module>router</module>
         <module>system-tests</module>

@@ -20,7 +20,7 @@ public class UploadedMessageListener {
     public void handleUpload(MessageUploadedEvent event) {
 
         MessageEntity msg = new MessageEntity();
-        msg.setClientId(event.getClientId());
+        msg.setContractId(event.getContractId());
         msg.setMessageType(event.getMessageType());
         msg.setBlobUrl(event.getBlobUrl());
         msg.setSha256Hash(event.getSha256Hash());

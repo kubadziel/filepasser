@@ -4,6 +4,8 @@ const uploadEndpoint =
   process.env.UPLOAD_ENDPOINT ?? "http://localhost:8081/api/upload";
 const USE_REAL_BACKEND = process.env.E2E_REAL_BACKEND === "1";
 
+const testFilename = "1234567_sample.xml";
+
 test.describe("Upload flow", () => {
   test("displays upload result on success", async ({ page }) => {
     if (!USE_REAL_BACKEND) {
@@ -13,17 +15,18 @@ test.describe("Upload flow", () => {
           contentType: "application/json",
           body: JSON.stringify({
             status: "SENT_TO_ROUTER",
-            clientId: "UI_CLIENT",
+            contractId: "1234567",
           }),
         });
       });
     }
 
-    await page.goto("/upload");
+    await page.goto("/dashboard");
+    await page.getByText("Upload XML Message").click();
     await expect(page.getByText("Upload XML File")).toBeVisible();
 
     await page.setInputFiles('input[type="file"]', {
-      name: "sample.xml",
+      name: testFilename,
       mimeType: "text/xml",
       buffer: Buffer.from("<pain></pain>"),
     });
@@ -37,13 +40,13 @@ test.describe("Upload flow", () => {
 
     const resultBox = page.getByTestId("upload-result");
     await expect(resultBox).toBeVisible();
-    if (payload.clientId) {
-      await expect(resultBox).toContainText(payload.clientId);
+    if (payload.contractId) {
+      await expect(resultBox).toContainText(payload.contractId);
     }
 
     if (!USE_REAL_BACKEND) {
       await expect(resultBox).toContainText('"status": "SENT_TO_ROUTER"');
-      await expect(resultBox).toContainText('"clientId": "UI_CLIENT"');
+      await expect(resultBox).toContainText('"contractId": "1234567"');
     } else {
       await expect(resultBox).not.toContainText("Upload failed");
     }
@@ -60,10 +63,11 @@ test.describe("Upload flow", () => {
       });
     });
 
-    await page.goto("/upload");
+    await page.goto("/dashboard");
+    await page.getByText("Upload XML Message").click();
 
     await page.setInputFiles('input[type="file"]', {
-      name: "sample.xml",
+      name: testFilename,
       mimeType: "text/xml",
       buffer: Buffer.from("<pain></pain>"),
     });

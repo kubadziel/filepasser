@@ -12,7 +12,7 @@ MINIO_ALIAS = local
 MINIO_BUCKET = router-inbound
 
 FRONTEND_DIR = filepasser-frontend
-FRONTEND_E2E_PORT ?= 5173
+FRONTEND_E2E_PORT ?= 3000
 UPLOAD_ENDPOINT ?= http://localhost:8081/api/upload
 
 .DEFAULT_GOAL := help
@@ -34,6 +34,7 @@ help:
 	@echo " make router-build       - Build router backend"
 	@echo " make uploader-build     - Build uploader backend"
 	@echo " make shared-events-build- Build shared events jar"
+	@echo " make shared-security-build- Build shared security jar"
 	@echo " make e2e-full           - Run Playwright E2E test against live stack"
 	@echo ""
 	@echo " (set RUN_TESTS=1 before any build target above to include tests)"
@@ -68,6 +69,12 @@ rebuild:
 		mvn -f common/shared-kafka-events/pom.xml clean install; \
 	else \
 		mvn -f common/shared-kafka-events/pom.xml clean install -DskipTests; \
+	fi
+	@if [ "$${RUN_TESTS:-0}" = "1" ]; then \
+		echo "Running shared-security build with tests"; \
+		mvn -f common/shared-security/pom.xml clean install; \
+	else \
+		mvn -f common/shared-security/pom.xml clean install -DskipTests; \
 	fi
 	@if [ "$${RUN_TESTS:-0}" = "1" ]; then \
 		echo "Running router build with tests"; \
@@ -117,6 +124,14 @@ shared-events-build:
 		mvn -f common/shared-kafka-events/pom.xml clean package -DskipTests; \
 	fi
 
+shared-security-build:
+	@if [ "$${RUN_TESTS:-0}" = "1" ]; then \
+		echo "Running shared-security build with tests"; \
+		mvn -f common/shared-security/pom.xml clean package; \
+	else \
+		mvn -f common/shared-security/pom.xml clean package -DskipTests; \
+	fi
+
 # --------------------------------------------
 # FRONTEND (filepasser-frontend)
 # --------------------------------------------
@@ -142,7 +157,12 @@ e2e-full:
 	npx playwright install --with-deps >/dev/null; \
 	LOG_FILE=$$(mktemp); \
 	echo "Starting Vite dev server on port $(FRONTEND_E2E_PORT)..."; \
-	VITE_PORT=$(FRONTEND_E2E_PORT) VITE_UPLOAD_ENDPOINT=$(UPLOAD_ENDPOINT) npm run dev -- --host 0.0.0.0 >$$LOG_FILE 2>&1 & \
+	VITE_PORT=$(FRONTEND_E2E_PORT) \
+	VITE_UPLOAD_ENDPOINT=$(UPLOAD_ENDPOINT) \
+	VITE_KEYCLOAK_URL=http://keycloak:8085 \
+	VITE_KEYCLOAK_REALM=filepasser \
+	VITE_KEYCLOAK_CLIENT_ID=filepasser-frontend \
+	npm run dev -- --host 0.0.0.0 >$$LOG_FILE 2>&1 & \
 	DEV_PID=$$!; \
 	popd >/dev/null; \
 	READY=0; \
@@ -162,6 +182,9 @@ e2e-full:
 	PLAYWRIGHT_BASE_URL=http://localhost:$(FRONTEND_E2E_PORT) \
 	E2E_REAL_BACKEND=1 \
 	UPLOAD_ENDPOINT=$(UPLOAD_ENDPOINT) \
+	KEYCLOAK_PUBLIC_URL=http://keycloak:8085 \
+	KEYCLOAK_REALM=filepasser \
+	KEYCLOAK_CLIENT_ID=filepasser-frontend \
 	npm run test:e2e || STATUS=$$?; \
 	popd >/dev/null; \
 	kill $$DEV_PID 2>/dev/null || true; wait $$DEV_PID 2>/dev/null || true; \

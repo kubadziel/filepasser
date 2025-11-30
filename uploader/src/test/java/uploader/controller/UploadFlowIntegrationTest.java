@@ -6,7 +6,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
@@ -17,6 +17,7 @@ import shared.events.MessageStatus;
 import shared.events.MessageUploadedEvent;
 import uploader.model.MessageEntity;
 import uploader.repository.MessageRepository;
+import uploader.service.KeycloakUserService;
 import uploader.service.MinioService;
 
 import java.time.Instant;
@@ -35,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @EmbeddedKafka(partitions = 1, topics = "message_uploaded")
 @TestPropertySource(properties = {
         "spring.datasource.url=jdbc:h2:mem:uploader-int;DB_CLOSE_DELAY=-1",
@@ -43,7 +44,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.datasource.username=sa",
         "spring.datasource.password=",
         "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}"
+        "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
+        "security.enabled=false"
 })
 class UploadFlowIntegrationTest {
 
@@ -53,15 +55,22 @@ class UploadFlowIntegrationTest {
     @Autowired
     private MessageRepository messageRepository;
 
-    @MockBean
+    @MockitoBean
     private MinioService minioService;
 
-    @MockBean
+    @MockitoBean
+    private KeycloakUserService keycloakUserService;
+
+    @MockitoBean
     private KafkaTemplate<String, Object> kafkaTemplate;
+
+    private String contractId;
 
     @BeforeEach
     void cleanRepository() {
         messageRepository.deleteAll();
+        contractId = "1234567";
+        when(keycloakUserService.contractExists(contractId)).thenReturn(true);
     }
 
     @Test
@@ -70,7 +79,7 @@ class UploadFlowIntegrationTest {
 
         MockMultipartFile file = new MockMultipartFile(
                 "file",
-                "pain001.xml",
+                contractId + "_pain001.xml",
                 MediaType.APPLICATION_XML_VALUE,
                 "<pain></pain>".getBytes()
         );
@@ -78,11 +87,10 @@ class UploadFlowIntegrationTest {
         mockMvc.perform(
                         multipart("/api/upload")
                                 .file(file)
-                                .param("clientId", "CLIENT-GUI")
                                 .characterEncoding("UTF-8")
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.clientId").value("CLIENT-GUI"))
+                .andExpect(jsonPath("$.contractId").value(contractId))
                 .andExpect(jsonPath("$.status").value("SENT_TO_ROUTER"));
 
         List<MessageEntity> stored = messageRepository.findAll();
@@ -90,6 +98,7 @@ class UploadFlowIntegrationTest {
 
         MessageEntity entity = stored.get(0);
         assertThat(entity.getStatus()).isEqualTo(MessageStatus.SENT_TO_ROUTER);
+        assertThat(entity.getContractId()).isEqualTo(contractId);
         assertThat(entity.getBlobUrl()).isEqualTo("object.xml");
         assertThat(entity.getSha256Hash()).isNotBlank();
         assertThat(entity.getCreatedOn()).isNotNull();
@@ -100,7 +109,7 @@ class UploadFlowIntegrationTest {
         verify(kafkaTemplate, times(1)).send(eq("message_uploaded"), eventCaptor.capture());
 
         MessageUploadedEvent published = eventCaptor.getValue();
-        assertThat(published.getClientId()).isEqualTo("CLIENT-GUI");
+        assertThat(published.getContractId()).isEqualTo(contractId);
         assertThat(published.getStatus()).isEqualTo(MessageStatus.UPLOADED);
         assertThat(published.getBlobUrl()).isEqualTo("object.xml");
     }

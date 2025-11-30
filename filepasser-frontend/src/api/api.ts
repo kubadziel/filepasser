@@ -1,13 +1,12 @@
-import axios from "axios";
+import http from "./http";
 
-const API_URL = import.meta.env.VITE_UPLOAD_ENDPOINT ?? "http://localhost:8081/api/upload";
+const API_URL = import.meta.env.VITE_UPLOAD_ENDPOINT ?? "/api/upload";
 
-export function uploadFile(file: File, clientId: string) {
+export function uploadFile(file: File) {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("clientId", clientId);
 
-    return axios.post(API_URL, formData, {
+    return http.post(API_URL, formData, {
         headers: { "Content-Type": "multipart/form-data" },
     });
 }
